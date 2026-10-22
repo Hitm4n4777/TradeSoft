@@ -1,0 +1,43 @@
+
+# Dependencies
+node_modules/
+.venv/
+venv/
+
+# Build output
+frontend/dist/
+frontend/build/
+desktop/dist/
+release/
+dist/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Local database and backups
+*.sqlite3
+*.db
+backups/
+*.backup
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor and operating system files
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp

@@ -1,0 +1,17 @@
+
+{
+  "name": "tradesoft-desktop",
+  "version": "1.0.0",
+  "description": "TradeSoft Inventory Management",
+  "main": "main.cjs",
+  "scripts": {
+    "start": "electron ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "electron": "^45.0.0"
+  }
+}
