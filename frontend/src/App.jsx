@@ -1,5 +1,6 @@
 import { useState } from "react";
 import "./App.css";
+import Inventory from "./Inventory";
 
 const navigation = [
   { section: "MAIN", items: [{ name: "Dashboard", icon: "▦" }] },
@@ -99,10 +100,16 @@ const stockItems = [
 
 const money = (value) => "Rs. " + value.toLocaleString("en-PK");
 
+// Main application component that renders the dashboard and section navigation.
 function App() {
+  // Tracks the currently selected navigation page in the left sidebar.
   const [activePage, setActivePage] = useState("Dashboard");
+  // Stores the transaction search term entered by the user.
   const [search, setSearch] = useState("");
+  // Stores the selected sales reporting period.
   const [period, setPeriod] = useState("This week");
+
+  // Filters transaction rows based on the user's search input.
 
   const filteredTransactions = transactions.filter((item) =>
     `${item.id} ${item.name} ${item.type}`
@@ -111,7 +118,9 @@ function App() {
   );
 
   return (
+    // Primary application shell containing the sidebar and main content area.
     <div className="app-shell">
+      {/* Left navigation panel with brand, menu groups, and workspace status. */}
       <aside className="sidebar">
         <div className="brand">
           <div className="brand-mark">T</div>
@@ -155,7 +164,9 @@ function App() {
         </div>
       </aside>
 
+      {/* Main content area for the selected business page. */}
       <main className="main-area">
+        {/* Top header with current page breadcrumb and user details. */}
         <header className="topbar">
           <div className="breadcrumb">
             Workspace <span>/</span> <strong>{activePage}</strong>
@@ -176,7 +187,9 @@ function App() {
         </header>
 
         {activePage === "Dashboard" ? (
+          // Dashboard view with overview stats, charts, alerts, and recent transactions.
           <div className="page-content">
+            {/* Welcome section and primary action button. */}
             <section className="welcome-row">
               <div>
                 <div className="eyebrow">BUSINESS OVERVIEW</div>
@@ -192,6 +205,7 @@ function App() {
               </button>
             </section>
 
+            {/* Summary cards for key business metrics. */}
             <section className="stats-grid">
               <article className="stat-card">
                 <div className="stat-top">
@@ -262,6 +276,7 @@ function App() {
               </article>
             </section>
 
+            {/* Insight panels for sales chart and low-stock alerts. */}
             <section className="insight-grid">
               <article className="panel sales-panel">
                 <div className="panel-header">
@@ -371,6 +386,7 @@ function App() {
               </article>
             </section>
 
+            {/* Recent transactions table for the dashboard. */}
             <section className="panel transactions-panel">
               <div className="panel-header transaction-heading">
                 <div>
@@ -446,12 +462,17 @@ function App() {
               </div>
             </section>
 
+            {/* Footer content for the current page. */}
             <footer className="page-footer">
               <span>TradeSoft © 2026</span>
               <span>Inventory management made simple.</span>
             </footer>
           </div>
+        ) : activePage === "Products & Stock" ? (
+          // Show the inventory page when Products & Stock is selected.
+          <Inventory />
         ) : (
+          // Fallback content for other navigation sections not yet implemented.
           <div className="placeholder-page">
             <div className="placeholder-icon">▦</div>
             <div className="eyebrow">TRADEsoft WORKSPACE</div>

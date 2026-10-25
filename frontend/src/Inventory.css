@@ -1,0 +1,334 @@
+
+/* ============================================================
+   TRADESOFT INVENTORY SCREEN
+   Responsive styles scoped to the inventory page.
+   ============================================================ */
+
+.inventory-page {
+  width: 100%;
+  min-width: 0;
+  padding: 28px;
+  color: var(--text-primary, #e8eaf0);
+}
+
+.inventory-header,
+.inventory-panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.inventory-header {
+  margin-bottom: 26px;
+}
+
+.inventory-eyebrow {
+  margin: 0 0 7px;
+  color: var(--accent-color, #8b80ff);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+
+.inventory-header h1 {
+  margin: 0;
+  font-size: clamp(25px, 3vw, 32px);
+  font-weight: 750;
+}
+
+.inventory-subtitle,
+.inventory-panel-heading p {
+  margin: 7px 0 0;
+  color: var(--text-secondary, #9298a8);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.inventory-refresh,
+.inventory-submit {
+  border: 0;
+  border-radius: 9px;
+  padding: 11px 17px;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.inventory-refresh {
+  color: var(--text-primary, #e8eaf0);
+  background: var(--surface-secondary, #252735);
+  border: 1px solid var(--border-color, #353848);
+}
+
+.inventory-submit {
+  color: white;
+  background: var(--accent-color, #7064ee);
+}
+
+.inventory-refresh:hover,
+.inventory-submit:hover {
+  transform: translateY(-1px);
+}
+
+.inventory-refresh:disabled,
+.inventory-submit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.inventory-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.inventory-stat,
+.inventory-panel {
+  min-width: 0;
+  border: 1px solid var(--border-color, #303343);
+  border-radius: 13px;
+  background: var(--surface-color, #191b27);
+}
+
+.inventory-stat {
+  padding: 20px;
+}
+
+.inventory-stat > span,
+.inventory-stat > small {
+  display: block;
+  color: var(--text-secondary, #9298a8);
+}
+
+.inventory-stat > span {
+  font-size: 12px;
+}
+
+.inventory-stat > strong {
+  display: block;
+  margin: 13px 0 8px;
+  font-size: 29px;
+  font-weight: 750;
+}
+
+.inventory-stat > small {
+  font-size: 11px;
+}
+
+.inventory-panel {
+  margin-bottom: 22px;
+  padding: 22px;
+}
+
+.inventory-panel-heading {
+  margin-bottom: 20px;
+}
+
+.inventory-panel-heading h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.inventory-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.inventory-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.inventory-form input,
+.inventory-form select,
+.inventory-toolbar input,
+.inventory-toolbar select {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 11px 12px;
+  border: 1px solid var(--border-color, #37394a);
+  border-radius: 8px;
+  outline: none;
+  background: var(--input-background, #202230);
+  color: var(--text-primary, #e8eaf0);
+  font: inherit;
+}
+
+.inventory-form input:focus,
+.inventory-form select:focus,
+.inventory-toolbar input:focus,
+.inventory-toolbar select:focus {
+  border-color: var(--accent-color, #7064ee);
+}
+
+.inventory-form label > small {
+  color: var(--text-secondary, #9298a8);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.inventory-notes-field {
+  grid-column: 1 / -1;
+}
+
+.inventory-form-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.inventory-message {
+  margin-bottom: 18px;
+  padding: 13px 15px;
+  border: 1px solid var(--border-color, #37394a);
+  border-radius: 9px;
+  font-size: 13px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.inventory-error {
+  color: #ff999f;
+  background: rgba(220, 60, 75, 0.09);
+}
+
+.inventory-success {
+  color: #7fe0b0;
+  background: rgba(35, 180, 110, 0.09);
+}
+
+.inventory-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 180px;
+  gap: 12px;
+  margin-bottom: 17px;
+}
+
+.inventory-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.inventory-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 12px;
+}
+
+.inventory-table th {
+  padding: 13px 14px;
+  color: var(--text-secondary, #9298a8);
+  background: var(--surface-secondary, #202230);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.inventory-table td {
+  padding: 15px 14px;
+  border-bottom: 1px solid var(--border-color, #303343);
+  white-space: nowrap;
+}
+
+.inventory-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.inventory-table tbody tr:hover {
+  background: rgba(130, 130, 160, 0.045);
+}
+
+.inventory-product-name {
+  font-weight: 650;
+}
+
+.inventory-status {
+  display: inline-block;
+  padding: 5px 9px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.status-good {
+  color: #78d9a4;
+  background: rgba(40, 180, 105, 0.12);
+}
+
+.status-low {
+  color: #f2c36f;
+  background: rgba(230, 165, 45, 0.13);
+}
+
+.status-out {
+  color: #ff9098;
+  background: rgba(230, 65, 80, 0.13);
+}
+
+.inventory-empty {
+  padding: 28px 14px !important;
+  color: var(--text-secondary, #9298a8);
+  text-align: center;
+}
+
+/* Adapt the inventory layout to narrower desktop windows and tablets. */
+@media (max-width: 1050px) {
+  .inventory-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Keep forms and tables usable in smaller windows. */
+@media (max-width: 650px) {
+  .inventory-page {
+    padding: 16px;
+  }
+
+  .inventory-header {
+    align-items: flex-start;
+  }
+
+  .inventory-stats {
+    gap: 10px;
+  }
+
+  .inventory-stat {
+    padding: 15px;
+  }
+
+  .inventory-stat > strong {
+    font-size: 24px;
+  }
+
+  .inventory-panel {
+    padding: 15px;
+  }
+
+  .inventory-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .inventory-notes-field,
+  .inventory-form-actions {
+    grid-column: 1;
+  }
+
+  .inventory-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
