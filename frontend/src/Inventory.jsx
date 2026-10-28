@@ -37,11 +37,15 @@ async function readResponse(response) {
   return data;
 }
 
-export default function Inventory() {
+export default function Inventory({
+  movements,
+  movementsLoading,
+  movementsError,
+  onRefreshMovements,
+}) {
   // Data loaded from the existing TradeSoft backend.
   const [products, setProducts] = useState([]);
   const [stock, setStock] = useState([]);
-  const [movements, setMovements] = useState([]);
 
   // Screen state.
   const [loading, setLoading] = useState(true);
@@ -63,25 +67,25 @@ export default function Inventory() {
     try {
       setError("");
 
-      const [productData, stockData, movementData] = await Promise.all([
+      const [productData, stockData] = await Promise.all([
         fetch(`${API}/products/`).then(readResponse),
         fetch(`${API}/stock-movements/stock/`).then(readResponse),
-        fetch(`${API}/stock-movements/`).then(readResponse),
       ]);
 
       setProducts(
         Array.isArray(productData) ? productData : productData.results || [],
       );
       setStock(Array.isArray(stockData) ? stockData : []);
-      setMovements(
-        Array.isArray(movementData) ? movementData : movementData.results || [],
-      );
     } catch (err) {
       setError(`Unable to load inventory: ${err.message}`);
     } finally {
       setLoading(false);
     }
   }, []);
+
+  async function refreshInventory() {
+    await Promise.all([loadInventory(), onRefreshMovements()]);
+  }
 
   // Load inventory when the screen opens.
   useEffect(() => {
@@ -181,7 +185,7 @@ export default function Inventory() {
       setNotes("");
 
       // Refresh stock and history after a successful entry only.
-      await loadInventory();
+      await Promise.all([loadInventory(), onRefreshMovements()]);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -202,7 +206,7 @@ export default function Inventory() {
 
         <button
           className="inventory-refresh"
-          onClick={loadInventory}
+          onClick={refreshInventory}
           disabled={loading || saving}
         >
           ↻ Refresh
@@ -456,7 +460,7 @@ export default function Inventory() {
                   <td className="inventory-product-name">
                     {movement.product_name || `Product #${movement.product}`}
                   </td>
-                  <td>{movement.movement_type}</td>
+                  <td>{movement.movement_type?.replaceAll("_", " ") || "—"}</td>
                   <td>
                     <strong>{number(movement.quantity)}</strong>
                   </td>
@@ -464,13 +468,33 @@ export default function Inventory() {
                 </tr>
               ))}
 
-              {movements.length === 0 && (
+              {movementsLoading && movements.length === 0 && (
                 <tr>
                   <td colSpan="5" className="inventory-empty">
-                    No stock movements recorded yet.
+                    Loading recent stock movements...
                   </td>
                 </tr>
               )}
+
+              {!movementsLoading &&
+                movementsError &&
+                movements.length === 0 && (
+                  <tr>
+                    <td colSpan="5" className="inventory-empty">
+                      Unable to load stock movements: {movementsError}
+                    </td>
+                  </tr>
+                )}
+
+              {!movementsLoading &&
+                !movementsError &&
+                movements.length === 0 && (
+                  <tr>
+                    <td colSpan="5" className="inventory-empty">
+                      No stock movements recorded yet.
+                    </td>
+                  </tr>
+                )}
             </tbody>
           </table>
         </div>

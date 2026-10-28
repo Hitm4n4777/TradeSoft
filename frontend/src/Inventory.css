@@ -8,7 +8,7 @@
   width: 100%;
   min-width: 0;
   padding: 28px;
-  color: var(--text-primary, #e8eaf0);
+  color: #1f2937;
 }
 
 .inventory-header,
@@ -25,7 +25,7 @@
 
 .inventory-eyebrow {
   margin: 0 0 7px;
-  color: var(--accent-color, #8b80ff);
+  color: #5b61d6;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 1.5px;
@@ -40,7 +40,7 @@
 .inventory-subtitle,
 .inventory-panel-heading p {
   margin: 7px 0 0;
-  color: var(--text-secondary, #9298a8);
+  color: #64748b;
   font-size: 13px;
   line-height: 1.6;
 }
@@ -57,14 +57,15 @@
 }
 
 .inventory-refresh {
-  color: var(--text-primary, #e8eaf0);
-  background: var(--surface-secondary, #252735);
-  border: 1px solid var(--border-color, #353848);
+  color: #334155;
+  background: #fff;
+  border: 1px solid #dbe3ee;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);
 }
 
 .inventory-submit {
   color: white;
-  background: var(--accent-color, #7064ee);
+  background: #5b61d6;
 }
 
 .inventory-refresh:hover,
@@ -89,9 +90,10 @@
 .inventory-stat,
 .inventory-panel {
   min-width: 0;
-  border: 1px solid var(--border-color, #303343);
+  border: 1px solid #e2e8f0;
   border-radius: 13px;
-  background: var(--surface-color, #191b27);
+  background: #fff;
+  box-shadow: 0 5px 18px rgba(15, 23, 42, 0.045);
 }
 
 .inventory-stat {
@@ -101,7 +103,7 @@
 .inventory-stat > span,
 .inventory-stat > small {
   display: block;
-  color: var(--text-secondary, #9298a8);
+  color: #64748b;
 }
 
 .inventory-stat > span {
@@ -157,11 +159,11 @@
   min-width: 0;
   box-sizing: border-box;
   padding: 11px 12px;
-  border: 1px solid var(--border-color, #37394a);
+  border: 1px solid #d5deea;
   border-radius: 8px;
   outline: none;
-  background: var(--input-background, #202230);
-  color: var(--text-primary, #e8eaf0);
+  background: #fff;
+  color: #1f2937;
   font: inherit;
 }
 
@@ -169,11 +171,12 @@
 .inventory-form select:focus,
 .inventory-toolbar input:focus,
 .inventory-toolbar select:focus {
-  border-color: var(--accent-color, #7064ee);
+  border-color: #686de0;
+  box-shadow: 0 0 0 3px rgba(104, 109, 224, 0.13);
 }
 
 .inventory-form label > small {
-  color: var(--text-secondary, #9298a8);
+  color: #64748b;
   font-size: 11px;
   font-weight: 400;
   line-height: 1.5;
@@ -192,7 +195,7 @@
 .inventory-message {
   margin-bottom: 18px;
   padding: 13px 15px;
-  border: 1px solid var(--border-color, #37394a);
+  border: 1px solid #e2e8f0;
   border-radius: 9px;
   font-size: 13px;
   white-space: pre-wrap;
@@ -200,13 +203,15 @@
 }
 
 .inventory-error {
-  color: #ff999f;
-  background: rgba(220, 60, 75, 0.09);
+  color: #b42332;
+  border-color: #fecdd3;
+  background: #fff1f2;
 }
 
 .inventory-success {
-  color: #7fe0b0;
-  background: rgba(35, 180, 110, 0.09);
+  color: #167447;
+  border-color: #bbf7d0;
+  background: #f0fdf4;
 }
 
 .inventory-toolbar {
@@ -230,8 +235,8 @@
 
 .inventory-table th {
   padding: 13px 14px;
-  color: var(--text-secondary, #9298a8);
-  background: var(--surface-secondary, #202230);
+  color: #64748b;
+  background: #f8fafc;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.6px;
@@ -241,7 +246,7 @@
 
 .inventory-table td {
   padding: 15px 14px;
-  border-bottom: 1px solid var(--border-color, #303343);
+  border-bottom: 1px solid #e8edf4;
   white-space: nowrap;
 }
 
@@ -250,7 +255,7 @@
 }
 
 .inventory-table tbody tr:hover {
-  background: rgba(130, 130, 160, 0.045);
+  background: #f8faff;
 }
 
 .inventory-product-name {
@@ -266,23 +271,23 @@
 }
 
 .status-good {
-  color: #78d9a4;
-  background: rgba(40, 180, 105, 0.12);
+  color: #167447;
+  background: #dcfce7;
 }
 
 .status-low {
-  color: #f2c36f;
-  background: rgba(230, 165, 45, 0.13);
+  color: #9a5b08;
+  background: #fef3c7;
 }
 
 .status-out {
-  color: #ff9098;
-  background: rgba(230, 65, 80, 0.13);
+  color: #b42332;
+  background: #ffe4e6;
 }
 
 .inventory-empty {
   padding: 28px 14px !important;
-  color: var(--text-secondary, #9298a8);
+  color: #64748b;
   text-align: center;
 }
 

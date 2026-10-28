@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import "./App.css";
 import Inventory from "./Inventory";
 
@@ -8,6 +8,7 @@ const navigation = [
     section: "BUSINESS",
     items: [
       { name: "Products & Stock", icon: "▤" },
+
       { name: "Sales", icon: "↗" },
       { name: "Purchases", icon: "↙" },
       { name: "Customers", icon: "♙" },
@@ -21,49 +22,6 @@ const navigation = [
       { name: "Reports", icon: "▥" },
       { name: "Settings", icon: "⚙" },
     ],
-  },
-];
-
-const transactions = [
-  {
-    id: "INV-1008",
-    name: "Ahmed Traders",
-    type: "Sale",
-    date: "23 Oct 2026",
-    amount: 48500,
-    status: "Completed",
-  },
-  {
-    id: "PUR-0042",
-    name: "Punjab Feed Mills",
-    type: "Purchase",
-    date: "23 Oct 2026",
-    amount: 72000,
-    status: "Completed",
-  },
-  {
-    id: "INV-1007",
-    name: "Al Madina Farm",
-    type: "Sale",
-    date: "22 Oct 2026",
-    amount: 27500,
-    status: "Pending",
-  },
-  {
-    id: "INV-1006",
-    name: "Usman Poultry Farm",
-    type: "Sale",
-    date: "22 Oct 2026",
-    amount: 16300,
-    status: "Completed",
-  },
-  {
-    id: "PUR-0041",
-    name: "National Feed Supply",
-    type: "Purchase",
-    date: "21 Oct 2026",
-    amount: 56000,
-    status: "Pending",
   },
 ];
 
@@ -99,23 +57,44 @@ const stockItems = [
 ];
 
 const money = (value) => "Rs. " + value.toLocaleString("en-PK");
+const number = (value) =>
+  Number(value || 0).toLocaleString(undefined, { maximumFractionDigits: 3 });
 
 // Main application component that renders the dashboard and section navigation.
 function App() {
   // Tracks the currently selected navigation page in the left sidebar.
   const [activePage, setActivePage] = useState("Dashboard");
-  // Stores the transaction search term entered by the user.
-  const [search, setSearch] = useState("");
   // Stores the selected sales reporting period.
   const [period, setPeriod] = useState("This week");
+  const [movements, setMovements] = useState([]);
+  const [movementsLoading, setMovementsLoading] = useState(true);
+  const [movementsError, setMovementsError] = useState("");
 
-  // Filters transaction rows based on the user's search input.
+  const loadMovements = useCallback(async () => {
+    setMovementsLoading(true);
+    setMovementsError("");
 
-  const filteredTransactions = transactions.filter((item) =>
-    `${item.id} ${item.name} ${item.type}`
-      .toLowerCase()
-      .includes(search.toLowerCase()),
-  );
+    try {
+      const response = await fetch(
+        "http://127.0.0.1:8000/api/stock-movements/",
+      );
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.detail || "Unable to load stock movements.");
+      }
+      setMovements(Array.isArray(data) ? data : data.results || []);
+    } catch (error) {
+      setMovementsError(error.message);
+    } finally {
+      setMovementsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadMovements();
+  }, [loadMovements]);
+
+  const recentMovements = movements.slice(0, 10);
 
   return (
     // Primary application shell containing the sidebar and main content area.
@@ -391,22 +370,17 @@ function App() {
               <div className="panel-header transaction-heading">
                 <div>
                   <h3>Recent transactions</h3>
-                  <p>Your latest sales and purchases</p>
+                  <p>The same latest stock movements shown in inventory</p>
                 </div>
                 <div className="transaction-actions">
-                  <label className="search-box">
-                    <span>⌕</span>
-                    <input
-                      value={search}
-                      onChange={(event) => setSearch(event.target.value)}
-                      placeholder="Search transactions..."
-                    />
-                  </label>
+                  <button className="secondary-button" onClick={loadMovements}>
+                    ↻ Refresh
+                  </button>
                   <button
                     className="secondary-button"
-                    onClick={() => setActivePage("Sales")}
+                    onClick={() => setActivePage("Products & Stock")}
                   >
-                    View all
+                    View inventory
                   </button>
                 </div>
               </div>
@@ -415,50 +389,69 @@ function App() {
                 <table>
                   <thead>
                     <tr>
-                      <th>REFERENCE</th>
-                      <th>CUSTOMER / SUPPLIER</th>
-                      <th>TYPE</th>
                       <th>DATE</th>
-                      <th>AMOUNT</th>
-                      <th>STATUS</th>
+                      <th>PRODUCT</th>
+                      <th>TYPE</th>
+                      <th>QUANTITY</th>
+                      <th>REFERENCE</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredTransactions.map((item) => (
-                      <tr key={item.id}>
-                        <td className="reference">{item.id}</td>
-                        <td className="party-name">{item.name}</td>
-                        <td>
-                          <span
-                            className={`type-pill ${item.type.toLowerCase()}`}
-                          >
-                            {item.type}
-                          </span>
+                    {recentMovements.map((movement) => (
+                      <tr key={movement.id}>
+                        <td className="date-cell">
+                          {movement.created_at
+                            ? new Date(movement.created_at).toLocaleString()
+                            : "—"}
                         </td>
-                        <td className="date-cell">{item.date}</td>
-                        <td className="amount-cell">{money(item.amount)}</td>
+                        <td className="party-name">
+                          {movement.product_name ||
+                            `Product #${movement.product}`}
+                        </td>
                         <td>
-                          <span
-                            className={`status-pill ${item.status.toLowerCase()}`}
-                          >
-                            <i /> {item.status}
-                          </span>
+                          {movement.movement_type?.replaceAll("_", " ") || "—"}
+                        </td>
+                        <td className="amount-cell">
+                          {number(movement.quantity)}
+                        </td>
+                        <td className="reference">
+                          {movement.reference || "—"}
                         </td>
                       </tr>
                     ))}
-                    {filteredTransactions.length === 0 && (
+                    {movementsLoading && recentMovements.length === 0 && (
                       <tr>
-                        <td colSpan="6" className="empty-state">
-                          No matching transactions found.
+                        <td colSpan="5" className="empty-state">
+                          Loading recent stock movements...
                         </td>
                       </tr>
                     )}
+                    {!movementsLoading &&
+                      movementsError &&
+                      recentMovements.length === 0 && (
+                        <tr>
+                          <td colSpan="5" className="empty-state">
+                            {movementsError}
+                          </td>
+                        </tr>
+                      )}
+                    {!movementsLoading &&
+                      !movementsError &&
+                      recentMovements.length === 0 && (
+                        <tr>
+                          <td colSpan="5" className="empty-state">
+                            No stock movements recorded yet.
+                          </td>
+                        </tr>
+                      )}
                   </tbody>
                 </table>
               </div>
               <div className="table-footer">
-                Showing {filteredTransactions.length} of {transactions.length}{" "}
-                sample transactions
+                Showing {recentMovements.length} latest stock movements
+                {movementsError && recentMovements.length > 0
+                  ? ` · Refresh failed: ${movementsError}`
+                  : ""}
               </div>
             </section>
 
@@ -470,7 +463,12 @@ function App() {
           </div>
         ) : activePage === "Products & Stock" ? (
           // Show the inventory page when Products & Stock is selected.
-          <Inventory />
+          <Inventory
+            movements={movements}
+            movementsLoading={movementsLoading}
+            movementsError={movementsError}
+            onRefreshMovements={loadMovements}
+          />
         ) : (
           // Fallback content for other navigation sections not yet implemented.
           <div className="placeholder-page">
