@@ -1,11 +1,11 @@
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 
-from django.db import transaction
+from django.db import models, transaction
 from rest_framework import generics, serializers
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.db import models, transaction
+from django.utils import timezone
 
 # Import the database models used by the inventory API.
 from .models import Product, StockMovement
@@ -111,6 +111,37 @@ class StockMovementListCreateView(generics.ListCreateAPIView):
 
         # Save the movement only after validation succeeds.
         serializer.save(product=product)
+
+
+# ============================================================
+# DAILY SALES SUMMARY API
+# GET /api/dashboard/daily-sales/ -> Today's recorded sale value.
+# ============================================================
+class DailySalesSummaryView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        today = timezone.localdate()
+        total = StockMovement.objects.filter(
+            movement_type="sale",
+            quantity__lt=0,
+            created_at__date=today,
+        ).aggregate(
+            total=models.Sum(
+                models.ExpressionWrapper(
+                    -models.F("quantity") * models.F("product__selling_price"),
+                    output_field=models.DecimalField(
+                        max_digits=30,
+                        decimal_places=5,
+                    ),
+                )
+            )
+        )["total"] or Decimal("0.00")
+
+        return Response({
+            "date": today.isoformat(),
+            "total_sales": str(total.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)),
+        })
 
 
 # ============================================================

@@ -39,6 +39,13 @@ class StockMovementSerializer(serializers.ModelSerializer):
         source="product.name",
         read_only=True,
     )
+    product_selling_price = serializers.DecimalField(
+        source="product.selling_price",
+        max_digits=12,
+        decimal_places=2,
+        read_only=True,
+    )
+    product_sku = serializers.CharField(source="product.sku", read_only=True)
 
     class Meta:
         model = StockMovement
@@ -46,6 +53,8 @@ class StockMovementSerializer(serializers.ModelSerializer):
             "id",
             "product",
             "product_name",
+            "product_sku",
+            "product_selling_price",
             "quantity",
             "movement_type",
             "reference",

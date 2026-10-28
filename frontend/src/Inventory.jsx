@@ -54,6 +54,17 @@ export default function Inventory({
   const [success, setSuccess] = useState("");
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
+  const [productSaving, setProductSaving] = useState(false);
+  const [removingProductId, setRemovingProductId] = useState(null);
+  const [productForm, setProductForm] = useState({
+    name: "",
+    sku: "",
+    category: "",
+    unit: "bag",
+    purchase_price: "",
+    selling_price: "",
+    minimum_stock: "",
+  });
 
   // Stock entry form state.
   const [productId, setProductId] = useState("");
@@ -85,6 +96,74 @@ export default function Inventory({
 
   async function refreshInventory() {
     await Promise.all([loadInventory(), onRefreshMovements()]);
+  }
+
+  async function handleAddProduct(event) {
+    event.preventDefault();
+    if (productSaving) return;
+
+    try {
+      setProductSaving(true);
+      setError("");
+      setSuccess("");
+
+      await readResponse(
+        await fetch(`${API}/products/`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...productForm,
+            name: productForm.name.trim(),
+            sku: productForm.sku.trim(),
+            category: productForm.category.trim(),
+            purchase_price: productForm.purchase_price || "0",
+            selling_price: productForm.selling_price || "0",
+            minimum_stock: productForm.minimum_stock || "0",
+          }),
+        }),
+      );
+
+      setProductForm({
+        name: "",
+        sku: "",
+        category: "",
+        unit: "bag",
+        purchase_price: "",
+        selling_price: "",
+        minimum_stock: "",
+      });
+      setSuccess("Product added successfully.");
+      await loadInventory();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setProductSaving(false);
+    }
+  }
+
+  async function handleRemoveProduct(product) {
+    const confirmed = window.confirm(
+      `Remove ${product.name} (${product.sku}) from active products? Its stock and transaction history will be preserved.`,
+    );
+    if (!confirmed || removingProductId !== null) return;
+
+    try {
+      setRemovingProductId(product.id);
+      setError("");
+      setSuccess("");
+
+      await readResponse(
+        await fetch(`${API}/products/${product.id}/`, { method: "DELETE" }),
+      );
+
+      if (String(productId) === String(product.id)) setProductId("");
+      setSuccess(`${product.name} was removed from active products.`);
+      await loadInventory();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setRemovingProductId(null);
+    }
   }
 
   // Load inventory when the screen opens.
@@ -256,6 +335,124 @@ export default function Inventory({
       <section className="inventory-panel">
         <div className="inventory-panel-heading">
           <div>
+            <h2>Add a product</h2>
+            <p>
+              Add a product to your catalog. New products start with no stock;
+              record an opening stock movement below.
+            </p>
+          </div>
+        </div>
+
+        <form
+          className="inventory-form product-form"
+          onSubmit={handleAddProduct}
+        >
+          <label>
+            Product name
+            <input
+              value={productForm.name}
+              onChange={(event) =>
+                setProductForm({ ...productForm, name: event.target.value })
+              }
+              placeholder="e.g. Layer Feed"
+              required
+            />
+          </label>
+          <label>
+            SKU
+            <input
+              value={productForm.sku}
+              onChange={(event) =>
+                setProductForm({ ...productForm, sku: event.target.value })
+              }
+              placeholder="Unique product code"
+              required
+            />
+          </label>
+          <label>
+            Category
+            <input
+              value={productForm.category}
+              onChange={(event) =>
+                setProductForm({ ...productForm, category: event.target.value })
+              }
+              placeholder="Optional"
+            />
+          </label>
+          <label>
+            Unit
+            <input
+              value={productForm.unit}
+              onChange={(event) =>
+                setProductForm({ ...productForm, unit: event.target.value })
+              }
+              placeholder="bag, kg, ton"
+              required
+            />
+          </label>
+          <label>
+            Purchase price
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={productForm.purchase_price}
+              onChange={(event) =>
+                setProductForm({
+                  ...productForm,
+                  purchase_price: event.target.value,
+                })
+              }
+              placeholder="0.00"
+            />
+          </label>
+          <label>
+            Selling price
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={productForm.selling_price}
+              onChange={(event) =>
+                setProductForm({
+                  ...productForm,
+                  selling_price: event.target.value,
+                })
+              }
+              placeholder="0.00"
+            />
+          </label>
+          <label>
+            Minimum stock
+            <input
+              type="number"
+              min="0"
+              step="0.001"
+              value={productForm.minimum_stock}
+              onChange={(event) =>
+                setProductForm({
+                  ...productForm,
+                  minimum_stock: event.target.value,
+                })
+              }
+              placeholder="0"
+            />
+          </label>
+          <div className="inventory-form-actions">
+            <button
+              type="submit"
+              className="inventory-submit"
+              disabled={productSaving || loading}
+            >
+              {productSaving ? "Adding product..." : "＋ Add product"}
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <section className="inventory-panel">
+        <div className="inventory-panel-heading">
+          <div>
             <h2>Record stock movement</h2>
             <p>
               Record opening stock, purchases, sales, returns, or adjustments.
@@ -386,6 +583,7 @@ export default function Inventory({
                   <th>Available</th>
                   <th>Minimum</th>
                   <th>Status</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -414,12 +612,34 @@ export default function Inventory({
                             : "In stock"}
                       </span>
                     </td>
+                    <td>
+                      <button
+                        type="button"
+                        className="inventory-remove"
+                        onClick={() =>
+                          handleRemoveProduct(
+                            products.find(
+                              (product) => product.id === item.product_id,
+                            ) || {
+                              id: item.product_id,
+                              name: item.name,
+                              sku: item.sku,
+                            },
+                          )
+                        }
+                        disabled={removingProductId !== null}
+                      >
+                        {removingProductId === item.product_id
+                          ? "Removing..."
+                          : "Remove"}
+                      </button>
+                    </td>
                   </tr>
                 ))}
 
                 {filteredStock.length === 0 && (
                   <tr>
-                    <td colSpan="5" className="inventory-empty">
+                    <td colSpan="6" className="inventory-empty">
                       No matching inventory items found.
                     </td>
                   </tr>

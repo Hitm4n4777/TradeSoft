@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import "./App.css";
 import Inventory from "./Inventory";
+import Sales from "./Sales";
 
 const navigation = [
   { section: "MAIN", items: [{ name: "Dashboard", icon: "▦" }] },
@@ -69,11 +70,11 @@ function App() {
   const [movements, setMovements] = useState([]);
   const [movementsLoading, setMovementsLoading] = useState(true);
   const [movementsError, setMovementsError] = useState("");
+  const [dailySales, setDailySales] = useState(null);
+  const [dailySalesLoading, setDailySalesLoading] = useState(true);
+  const [dailySalesError, setDailySalesError] = useState("");
 
   const loadMovements = useCallback(async () => {
-    setMovementsLoading(true);
-    setMovementsError("");
-
     try {
       const response = await fetch(
         "http://127.0.0.1:8000/api/stock-movements/",
@@ -83,6 +84,7 @@ function App() {
         throw new Error(data.detail || "Unable to load stock movements.");
       }
       setMovements(Array.isArray(data) ? data : data.results || []);
+      setMovementsError("");
     } catch (error) {
       setMovementsError(error.message);
     } finally {
@@ -90,9 +92,33 @@ function App() {
     }
   }, []);
 
+  const refreshMovements = useCallback(() => {
+    setMovementsLoading(true);
+    return loadMovements();
+  }, [loadMovements]);
+
+  const loadDailySales = useCallback(async () => {
+    try {
+      const response = await fetch(
+        "http://127.0.0.1:8000/api/dashboard/daily-sales/",
+      );
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.detail || "Unable to load daily sales.");
+      }
+      setDailySales(Number(data.total_sales || 0));
+      setDailySalesError("");
+    } catch (error) {
+      setDailySalesError(error.message);
+    } finally {
+      setDailySalesLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     loadMovements();
-  }, [loadMovements]);
+    loadDailySales();
+  }, [loadDailySales, loadMovements]);
 
   const recentMovements = movements.slice(0, 10);
 
@@ -188,20 +214,27 @@ function App() {
             <section className="stats-grid">
               <article className="stat-card">
                 <div className="stat-top">
-                  <span>Total sales</span>
+                  <span>Daily sales</span>
                   <span className="stat-icon blue">↗</span>
                 </div>
-                <h3>{money(284500)}</h3>
+                <h3>
+                  {dailySalesLoading
+                    ? "Loading..."
+                    : dailySales === null
+                      ? "—"
+                      : money(dailySales)}
+                </h3>
                 <div className="stat-bottom">
-                  <span className="trend positive">↑ 12.8%</span>
-                  <span>vs. last week</span>
-                </div>
-                <div className="mini-bars blue-bars">
-                  {[35, 52, 42, 72, 50, 84, 65, 100, 74, 88, 60, 92].map(
-                    (height, i) => (
-                      <i key={i} style={{ height: `${height}%` }} />
-                    ),
-                  )}
+                  <span
+                    className={`trend ${dailySalesError ? "warning" : "neutral"}`}
+                  >
+                    {dailySalesError ? "Unavailable" : "Today"}
+                  </span>
+                  <span>
+                    {dailySalesError
+                      ? "could not load sales"
+                      : "at current product prices"}
+                  </span>
                 </div>
               </article>
 
@@ -373,7 +406,10 @@ function App() {
                   <p>The same latest stock movements shown in inventory</p>
                 </div>
                 <div className="transaction-actions">
-                  <button className="secondary-button" onClick={loadMovements}>
+                  <button
+                    className="secondary-button"
+                    onClick={refreshMovements}
+                  >
                     ↻ Refresh
                   </button>
                   <button
@@ -467,7 +503,14 @@ function App() {
             movements={movements}
             movementsLoading={movementsLoading}
             movementsError={movementsError}
-            onRefreshMovements={loadMovements}
+            onRefreshMovements={refreshMovements}
+          />
+        ) : activePage === "Sales" ? (
+          <Sales
+            movements={movements}
+            movementsLoading={movementsLoading}
+            movementsError={movementsError}
+            onRefreshMovements={refreshMovements}
           />
         ) : (
           // Fallback content for other navigation sections not yet implemented.

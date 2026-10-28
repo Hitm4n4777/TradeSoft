@@ -8,6 +8,7 @@ from .views import (
     ProductDetailView,
     StockMovementListCreateView,
     CurrentStockView,
+    DailySalesSummaryView,
 )
 
 # ============================================================
@@ -34,5 +35,8 @@ urlpatterns = [
 
     # Retrieve current stock totals for active products.
     path("stock-movements/stock/", CurrentStockView.as_view(), name="current-stock"),
+
+    # Retrieve the value of sale movements recorded today.
+    path("dashboard/daily-sales/", DailySalesSummaryView.as_view(), name="daily-sales"),
     
 ]
