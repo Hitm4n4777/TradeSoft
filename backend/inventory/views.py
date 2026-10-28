@@ -1,3 +1,4 @@
+from datetime import timedelta
 from decimal import Decimal, ROUND_HALF_UP
 
 from django.db import models, transaction
@@ -6,6 +7,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.utils import timezone
+from django.db.models.functions import TruncDate
 
 # Import the database models used by the inventory API.
 from .models import Product, StockMovement
@@ -142,6 +144,53 @@ class DailySalesSummaryView(APIView):
             "date": today.isoformat(),
             "total_sales": str(total.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)),
         })
+
+
+# ============================================================
+# WEEKLY SALES SUMMARY API
+# GET /api/dashboard/weekly-sales/ -> Daily sales for the last 7 days.
+# ============================================================
+class WeeklySalesSummaryView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        today = timezone.localdate()
+        start_date = today - timedelta(days=6)
+        daily_totals = StockMovement.objects.filter(
+            movement_type="sale",
+            quantity__lt=0,
+            created_at__date__gte=start_date,
+            created_at__date__lte=today,
+        ).annotate(
+            sale_date=TruncDate("created_at", tzinfo=timezone.get_current_timezone())
+        ).values("sale_date").annotate(
+            total=models.Sum(
+                models.ExpressionWrapper(
+                    -models.F("quantity") * models.F("product__selling_price"),
+                    output_field=models.DecimalField(
+                        max_digits=30,
+                        decimal_places=5,
+                    ),
+                )
+            )
+        )
+        totals_by_date = {
+            item["sale_date"]: item["total"] or Decimal("0.00")
+            for item in daily_totals
+        }
+
+        return Response([
+            {
+                "date": (start_date + timedelta(days=day)).isoformat(),
+                "day": (start_date + timedelta(days=day)).strftime("%a"),
+                "total_sales": str(
+                    totals_by_date.get(
+                        start_date + timedelta(days=day), Decimal("0.00")
+                    ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                ),
+            }
+            for day in range(7)
+        ])
 
 
 # ============================================================

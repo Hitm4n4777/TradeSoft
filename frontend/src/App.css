@@ -626,6 +626,12 @@ button {
   font-size: 10px;
 }
 
+.chart-refresh {
+  flex-shrink: 0;
+  padding: 7px 10px;
+  font-size: 10px;
+}
+
 .chart-summary {
   display: flex;
   justify-content: space-between;
@@ -670,8 +676,10 @@ button {
   flex-direction: column;
   justify-content: space-between;
   padding: 0 10px 20px 0;
-  color: #a0a9b7;
-  font-size: 9px;
+  color: #748094;
+  font-size: 10px;
+  font-weight: 500;
+  text-align: right;
 }
 
 .chart-bars {
@@ -696,8 +704,9 @@ button {
   flex-direction: column;
   align-items: center;
   min-width: 0;
-  color: #98a2b1;
-  font-size: 9px;
+  color: #667387;
+  font-size: 10px;
+  font-weight: 600;
 }
 
 .bar-area {
@@ -714,6 +723,12 @@ button {
   background: linear-gradient(180deg, #7391fa, #4b6fe9);
   border-radius: 5px 5px 0 0;
   transition: height 250ms ease, opacity 150ms ease;
+}
+
+.chart-error {
+  margin: 10px 0 0;
+  color: #b42332;
+  font-size: 11px;
 }
 
 .chart-bar:hover {

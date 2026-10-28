@@ -65,14 +65,15 @@ const number = (value) =>
 function App() {
   // Tracks the currently selected navigation page in the left sidebar.
   const [activePage, setActivePage] = useState("Dashboard");
-  // Stores the selected sales reporting period.
-  const [period, setPeriod] = useState("This week");
   const [movements, setMovements] = useState([]);
   const [movementsLoading, setMovementsLoading] = useState(true);
   const [movementsError, setMovementsError] = useState("");
   const [dailySales, setDailySales] = useState(null);
   const [dailySalesLoading, setDailySalesLoading] = useState(true);
   const [dailySalesError, setDailySalesError] = useState("");
+  const [weeklySales, setWeeklySales] = useState([]);
+  const [weeklySalesLoading, setWeeklySalesLoading] = useState(true);
+  const [weeklySalesError, setWeeklySalesError] = useState("");
 
   const loadMovements = useCallback(async () => {
     try {
@@ -115,10 +116,55 @@ function App() {
     }
   }, []);
 
+  const loadWeeklySales = useCallback(async () => {
+    try {
+      const response = await fetch(
+        "http://127.0.0.1:8000/api/dashboard/weekly-sales/",
+      );
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.detail || "Unable to load weekly sales.");
+      }
+      setWeeklySales(Array.isArray(data) ? data : []);
+      setWeeklySalesError("");
+    } catch (error) {
+      setWeeklySalesError(error.message);
+    } finally {
+      setWeeklySalesLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     loadMovements();
     loadDailySales();
   }, [loadDailySales, loadMovements]);
+
+  useEffect(() => {
+    loadWeeklySales();
+    const refreshInterval = window.setInterval(loadWeeklySales, 30_000);
+    return () => window.clearInterval(refreshInterval);
+  }, [loadWeeklySales]);
+
+  const weeklySalesTotal = weeklySales.reduce(
+    (total, day) => total + Number(day.total_sales || 0),
+    0,
+  );
+  const weeklySalesMaximum = Math.max(
+    ...weeklySales.map((day) => Number(day.total_sales || 0)),
+    0,
+  );
+  const chartGridValues = [
+    weeklySalesMaximum,
+    weeklySalesMaximum * 0.75,
+    weeklySalesMaximum * 0.5,
+    weeklySalesMaximum * 0.25,
+    0,
+  ];
+  const compactMoney = (value) => {
+    if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}m`;
+    if (value >= 1_000) return `${(value / 1_000).toFixed(0)}k`;
+    return Math.round(value).toLocaleString("en-PK");
+  };
 
   const recentMovements = movements.slice(0, 10);
 
@@ -294,22 +340,21 @@ function App() {
                 <div className="panel-header">
                   <div>
                     <h3>Sales overview</h3>
-                    <p>Track your sales performance</p>
+                    <p>Daily sales for the last 7 days</p>
                   </div>
-                  <select
-                    value={period}
-                    onChange={(event) => setPeriod(event.target.value)}
-                    aria-label="Sales chart period"
+                  <button
+                    className="secondary-button chart-refresh"
+                    onClick={loadWeeklySales}
+                    disabled={weeklySalesLoading}
                   >
-                    <option>This week</option>
-                    <option>This month</option>
-                  </select>
+                    {weeklySalesLoading ? "Updating..." : "↻ Refresh"}
+                  </button>
                 </div>
 
                 <div className="chart-summary">
                   <div>
-                    <span className="muted-label">Total revenue</span>
-                    <h3>{money(period === "This week" ? 284500 : 986200)}</h3>
+                    <span className="muted-label">Last 7 days revenue</span>
+                    <h3>{money(weeklySalesTotal)}</h3>
                   </div>
                   <span className="chart-legend">
                     <i /> Sales revenue
@@ -318,42 +363,37 @@ function App() {
 
                 <div className="chart">
                   <div className="chart-grid">
-                    <span>80k</span>
-                    <span>60k</span>
-                    <span>40k</span>
-                    <span>20k</span>
-                    <span>0</span>
-                  </div>
-                  <div className="chart-bars">
-                    {(period === "This week"
-                      ? [
-                          ["Mon", 45],
-                          ["Tue", 68],
-                          ["Wed", 38],
-                          ["Thu", 82],
-                          ["Fri", 58],
-                          ["Sat", 95],
-                          ["Sun", 72],
-                        ]
-                      : [
-                          ["Week 1", 45],
-                          ["Week 2", 70],
-                          ["Week 3", 55],
-                          ["Week 4", 90],
-                        ]
-                    ).map(([label, height]) => (
-                      <div className="chart-column" key={label}>
-                        <div className="bar-area">
-                          <div
-                            className="chart-bar"
-                            style={{ height: `${height}%` }}
-                          />
-                        </div>
-                        <span>{label}</span>
-                      </div>
+                    {chartGridValues.map((value, index) => (
+                      <span key={index}>{compactMoney(value)}</span>
                     ))}
                   </div>
+                  <div className="chart-bars">
+                    {weeklySales.map((day) => {
+                      const amount = Number(day.total_sales || 0);
+                      const height = weeklySalesMaximum
+                        ? (amount / weeklySalesMaximum) * 100
+                        : 0;
+
+                      return (
+                        <div className="chart-column" key={day.date}>
+                          <div className="bar-area">
+                            <div
+                              className="chart-bar"
+                              style={{ height: `${height}%` }}
+                              title={`${day.day}: ${money(amount)}`}
+                            />
+                          </div>
+                          <span>{day.day}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
+                {weeklySalesError && (
+                  <p className="chart-error" role="alert">
+                    Could not refresh weekly sales: {weeklySalesError}
+                  </p>
+                )}
               </article>
 
               <article className="panel stock-panel">
