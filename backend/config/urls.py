@@ -29,4 +29,7 @@ urlpatterns = [
 
     # Include the inventory app's product API routes.
     path("api/", include("inventory.urls")),
+
+    # Customer records and contact-management API routes.
+    path("api/", include("contacts.urls")),
 ]

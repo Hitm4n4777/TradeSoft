@@ -5,13 +5,42 @@
   "description": "TradeSoft Inventory Management",
   "main": "main.cjs",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "build:frontend": "npm --prefix frontend run build",
+    "dist": "npm run build:frontend && electron-builder --win"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
-    "electron": "^45.0.0"
+    "electron": "^45.0.0",
+    "electron-builder": "^26.0.0"
+  },
+  "build": {
+    "appId": "com.tradesoft.desktop",
+    "productName": "TradeSoft",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main.cjs",
+      "preload.cjs",
+      "frontend/dist/**/*",
+      "backend/**/*",
+      "!backend/db.sqlite3",
+      "!backend/**/__pycache__/**/*",
+      "!backend/.venv/**/*",
+      "!backend/venv/**/*",
+      "!backend/**/*.pyc",
+      "!backend/**/tests/**/*"
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   }
 }

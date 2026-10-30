@@ -64,6 +64,7 @@ export default function Inventory({
     purchase_price: "",
     selling_price: "",
     minimum_stock: "",
+    initial_stock: "",
   });
 
   // Stock entry form state.
@@ -102,26 +103,49 @@ export default function Inventory({
     event.preventDefault();
     if (productSaving) return;
 
+    const initialStock = Number(productForm.initial_stock || 0);
+    if (!Number.isFinite(initialStock) || initialStock < 0) {
+      setError("Initial stock must be zero or greater.");
+      return;
+    }
+
+    let createdProduct = null;
     try {
       setProductSaving(true);
       setError("");
       setSuccess("");
 
-      await readResponse(
+      createdProduct = await readResponse(
         await fetch(`${API}/products/`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            ...productForm,
             name: productForm.name.trim(),
             sku: productForm.sku.trim(),
             category: productForm.category.trim(),
+            unit: productForm.unit,
             purchase_price: productForm.purchase_price || "0",
             selling_price: productForm.selling_price || "0",
             minimum_stock: productForm.minimum_stock || "0",
           }),
         }),
       );
+
+      if (initialStock > 0) {
+        await readResponse(
+          await fetch(`${API}/stock-movements/`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              product: createdProduct.id,
+              quantity: initialStock,
+              movement_type: "opening",
+              reference: "Initial stock",
+              notes: "Opening quantity entered when the product was created.",
+            }),
+          }),
+        );
+      }
 
       setProductForm({
         name: "",
@@ -131,11 +155,33 @@ export default function Inventory({
         purchase_price: "",
         selling_price: "",
         minimum_stock: "",
+        initial_stock: "",
       });
-      setSuccess("Product added successfully.");
-      await loadInventory();
+      setSuccess(
+        initialStock > 0
+          ? `Product added with ${number(initialStock)} ${createdProduct.unit} in stock.`
+          : "Product added successfully.",
+      );
+      await Promise.all([loadInventory(), onRefreshMovements()]);
     } catch (err) {
-      setError(err.message);
+      if (createdProduct) {
+        setProductForm({
+          name: "",
+          sku: "",
+          category: "",
+          unit: "bag",
+          purchase_price: "",
+          selling_price: "",
+          minimum_stock: "",
+          initial_stock: "",
+        });
+        setError(
+          `Product was created, but its initial stock could not be recorded: ${err.message} Use “Record stock movement” to add the stock.`,
+        );
+        await Promise.all([loadInventory(), onRefreshMovements()]);
+      } else {
+        setError(err.message);
+      }
     } finally {
       setProductSaving(false);
     }
@@ -437,6 +483,25 @@ export default function Inventory({
               }
               placeholder="0"
             />
+          </label>
+          <label>
+            Initial stock
+            <input
+              type="number"
+              min="0"
+              step="0.001"
+              value={productForm.initial_stock}
+              onChange={(event) =>
+                setProductForm({
+                  ...productForm,
+                  initial_stock: event.target.value,
+                })
+              }
+              placeholder="0"
+            />
+            <small>
+              Enter the quantity currently on hand. Leave at 0 if none.
+            </small>
           </label>
           <div className="inventory-form-actions">
             <button

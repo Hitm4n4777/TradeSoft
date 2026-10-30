@@ -226,3 +226,149 @@ class CurrentStockView(APIView):
         ]
 
         return Response(data)
+# ============================================================
+# SALES AND PROFITS SUMMARY API
+# GET /api/dashboard/sales-profits/?range=7days|30days|90days|all
+# Returns revenue, cost of goods sold, gross profit, margin,
+# and a per-product breakdown for the selected period.
+# ============================================================
+class SalesProfitsSummaryView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        range_param = (request.query_params.get("range") or "7days").lower()
+        today = timezone.localdate()
+
+        if range_param == "30days":
+            start_date = today - timedelta(days=29)
+        elif range_param == "90days":
+            start_date = today - timedelta(days=89)
+        elif range_param == "all":
+            start_date = None
+        else:
+            range_param = "7days"
+            start_date = today - timedelta(days=6)
+
+        explicit_start = request.query_params.get("start")
+        explicit_end = request.query_params.get("end")
+        if explicit_start:
+            try:
+                start_date = timezone.datetime.fromisoformat(explicit_start).date()
+            except ValueError:
+                return Response(
+                    {"detail": "Invalid start date. Use YYYY-MM-DD."},
+                    status=400,
+                )
+        if explicit_end:
+            try:
+                today = timezone.datetime.fromisoformat(explicit_end).date()
+            except ValueError:
+                return Response(
+                    {"detail": "Invalid end date. Use YYYY-MM-DD."},
+                    status=400,
+                )
+
+        movements = StockMovement.objects.select_related("product").filter(
+            movement_type="sale",
+            quantity__lt=0,
+        )
+        if start_date is not None:
+            movements = movements.filter(
+                created_at__date__gte=start_date,
+                created_at__date__lte=today,
+            )
+
+        total_sales = Decimal("0.00")
+        total_cost = Decimal("0.00")
+        total_quantity = Decimal("0.000")
+        sales_count = 0
+        breakdown_map = {}
+
+        for movement in movements:
+            product = movement.product
+            quantity_sold = abs(movement.quantity)
+            selling_price = product.selling_price or Decimal("0.00")
+            purchase_price = product.purchase_price or Decimal("0.00")
+
+            sales_value = (quantity_sold * selling_price).quantize(
+                Decimal("0.01"), rounding=ROUND_HALF_UP
+            )
+            cost_value = (quantity_sold * purchase_price).quantize(
+                Decimal("0.01"), rounding=ROUND_HALF_UP
+            )
+            profit_value = sales_value - cost_value
+
+            total_sales += sales_value
+            total_cost += cost_value
+            total_quantity += quantity_sold
+            sales_count += 1
+
+            entry = breakdown_map.setdefault(
+                product.id,
+                {
+                    "product_id": product.id,
+                    "product": product.name,
+                    "sku": product.sku,
+                    "unit": product.unit,
+                    "quantity": Decimal("0.000"),
+                    "sales": Decimal("0.00"),
+                    "cost": Decimal("0.00"),
+                    "profit": Decimal("0.00"),
+                },
+            )
+            entry["quantity"] += quantity_sold
+            entry["sales"] += sales_value
+            entry["cost"] += cost_value
+            entry["profit"] += profit_value
+
+        total_profit = total_sales - total_cost
+        profit_margin = (
+            (total_profit / total_sales * Decimal("100")).quantize(
+                Decimal("0.01"), rounding=ROUND_HALF_UP
+            )
+            if total_sales
+            else Decimal("0.00")
+        )
+
+        breakdown = []
+        for entry in breakdown_map.values():
+            entry_margin = (
+                (entry["profit"] / entry["sales"] * Decimal("100")).quantize(
+                    Decimal("0.01"), rounding=ROUND_HALF_UP
+                )
+                if entry["sales"]
+                else Decimal("0.00")
+            )
+            breakdown.append(
+                {
+                    "product_id": entry["product_id"],
+                    "product": entry["product"],
+                    "sku": entry["sku"],
+                    "unit": entry["unit"],
+                    "quantity": str(entry["quantity"].quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)),
+                    "sales": str(entry["sales"].quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)),
+                    "cost": str(entry["cost"].quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)),
+                    "profit": str(entry["profit"].quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)),
+                    "profit_margin": str(entry_margin),
+                }
+            )
+
+        breakdown.sort(key=lambda item: Decimal(item["profit"]), reverse=True)
+
+        return Response(
+            {
+                "range": range_param,
+                "start_date": start_date.isoformat() if start_date else None,
+                "end_date": today.isoformat(),
+                "summary": {
+                    "total_sales": str(total_sales.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)),
+                    "total_cost": str(total_cost.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)),
+                    "total_profit": str(total_profit.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)),
+                    "total_quantity": str(total_quantity.quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)),
+                    "profit_margin": str(profit_margin),
+                    "sales_count": sales_count,
+                },
+                "breakdown": breakdown,
+            }
+        )
+

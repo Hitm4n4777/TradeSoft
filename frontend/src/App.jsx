@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import "./App.css";
 import Inventory from "./Inventory";
 import Sales from "./Sales";
+import SalesandProfits from "./SalesandProfits";
 
 const navigation = [
   { section: "MAIN", items: [{ name: "Dashboard", icon: "▦" }] },
@@ -11,8 +12,8 @@ const navigation = [
       { name: "Products & Stock", icon: "▤" },
 
       { name: "Sales", icon: "↗" },
+      { name: "Sales and Profits", icon: "▤" },
       { name: "Purchases", icon: "↙" },
-      { name: "Customers", icon: "♙" },
       { name: "Suppliers", icon: "♧" },
     ],
   },
@@ -547,6 +548,13 @@ function App() {
           />
         ) : activePage === "Sales" ? (
           <Sales
+            movements={movements}
+            movementsLoading={movementsLoading}
+            movementsError={movementsError}
+            onRefreshMovements={refreshMovements}
+          />
+        ) : activePage === "Sales and Profits" ? (
+          <SalesandProfits
             movements={movements}
             movementsLoading={movementsLoading}
             movementsError={movementsError}

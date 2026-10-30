@@ -10,6 +10,7 @@ from .views import (
     CurrentStockView,
     DailySalesSummaryView,
     WeeklySalesSummaryView,
+    SalesProfitsSummaryView,
 )
 
 # ============================================================
@@ -40,5 +41,6 @@ urlpatterns = [
     # Retrieve the value of sale movements recorded today.
     path("dashboard/daily-sales/", DailySalesSummaryView.as_view(), name="daily-sales"),
     path("dashboard/weekly-sales/", WeeklySalesSummaryView.as_view(), name="weekly-sales"),
+    path("dashboard/sales-profits/", SalesProfitsSummaryView.as_view(), name="sales-profits"),
     
 ]

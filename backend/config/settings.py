@@ -1,4 +1,3 @@
-
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -6,6 +5,29 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "tradesoft-development-key-change-before-production"
 
 DEBUG = True
+
+
+# ============================================================
+# TRADESOFT DATABASE
+# Store business data outside the installation directory.
+# This allows data to survive normal app uninstallation.
+# ============================================================
+
+import os
+
+DATA_DIR = Path(
+    os.environ.get("LOCALAPPDATA", str(BASE_DIR))
+) / "TradeSoft"
+
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": DATA_DIR / "db.sqlite3",
+    }
+}
+
 
 ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
 
@@ -22,6 +44,7 @@ INSTALLED_APPS = [
 
     "rest_framework",
     "inventory",
+    "contacts",
 ]
 
 MIDDLEWARE = [
